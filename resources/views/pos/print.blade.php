@@ -174,7 +174,7 @@
 
         <div class="text-center">
             <p>Thank you for shopping!</p>
-            <small>Software by Gemini AI</small>
+            <small>Software by Smart-Pos-System</small>
         </div>
 
         <div class="text-center no-print" style="margin-top: 20px;">

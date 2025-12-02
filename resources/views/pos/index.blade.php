@@ -15,6 +15,7 @@
             transition: all 0.3s ease;
             background: var(--bs-body-bg);
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            overflow: hidden; /* Image overflow fix */
         }
         .product-card:hover {
             transform: translateY(-5px);
@@ -22,15 +23,25 @@
             border: 1px solid var(--bs-primary);
             cursor: pointer;
         }
-        .product-img-placeholder {
-            height: 100px;
+
+        /* Image Section Updated */
+        .product-img-container {
+            height: 120px; /* Height increased slightly */
+            width: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
-            border-radius: 12px 12px 0 0;
-            font-size: 1.5rem;
-            color: #5a6a85;
+            background: #f8f9fa;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .product-img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Image will cover the area */
+        }
+        .placeholder-text {
+            font-size: 2rem;
+            color: #adb5bd;
             font-weight: bold;
         }
 
@@ -92,8 +103,14 @@
                             <div class="card product-card h-100"
                                 onclick="addToCart({{ $variant->id }}, '{{ $product->name }} - {{ $variant->variant_name }}', {{ $variant->price }}, {{ $totalStock }})">
 
-                                <div class="product-img-placeholder">
-                                    {{ substr($product->name, 0, 1) }}
+                                <div class="product-img-container">
+                                    @if($product->image_path)
+                                        <img src="{{ asset('storage/' . $product->image_path) }}" alt="{{ $product->name }}">
+                                    @else
+                                        <div class="placeholder-text">
+                                            {{ substr($product->name, 0, 1) }}
+                                        </div>
+                                    @endif
                                 </div>
 
                                 <div class="card-body p-2 text-center">
@@ -280,7 +297,7 @@
         $(document).ready(function() {
             let cart = [];
 
-            // --- Voice Search with Better Error Handling ---
+            // --- Voice Search ---
             $('#voiceBtn').click(function() {
                 if (!('webkitSpeechRecognition' in window)) {
                     alert("Your browser doesn't support Voice Search. Try Google Chrome.");
@@ -288,7 +305,6 @@
                 }
 
                 const recognition = new webkitSpeechRecognition();
-                // ডিফল্ট ইংলিশ, তবে আপনি চাইলে ডায়নামিক করতে পারেন
                 recognition.lang = 'en-US';
                 recognition.continuous = false;
                 recognition.interimResults = false;
@@ -310,21 +326,16 @@
                 };
 
                 recognition.onerror = function(event) {
-                    // যদি কোনো কথা না শোনে
-                    if(event.error == 'no-speech') {
-                        alert("Did not hear anything. Please try again.");
-                    } else {
+                    if(event.error !== 'no-speech') {
                         console.error("Voice Error:", event.error);
-                        alert("Voice Error: " + event.error);
                     }
-                    // Reset Icon
                     $('#micIcon').removeClass('text-danger bi-mic-mute-fill listening-animation').addClass('text-primary bi-mic-fill');
                 };
 
                 recognition.start();
             });
 
-            // --- Product Filtering (Used by Search & Voice) ---
+            // --- Product Filtering ---
             $('#searchProduct').on('keyup', function() {
                 let value = $(this).val().toLowerCase();
                 filterProducts(value);
@@ -410,7 +421,7 @@
                 if (confirm("Clear cart?")) { cart = []; renderCart(); }
             };
 
-            // --- Payment & Barcode Logic (Same as before) ---
+            // --- Payment & Barcode Logic ---
             window.openPaymentModal = function() {
                 if (cart.length === 0) { alert("Cart is empty!"); return; }
                 let total = parseFloat($('#grandTotal').text());

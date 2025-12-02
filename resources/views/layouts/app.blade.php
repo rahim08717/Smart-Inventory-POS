@@ -417,7 +417,7 @@
     <footer class="text-center py-4 mt-auto border-top bg-body">
         <small class="text-muted">
             &copy; {{ date('Y') }} <strong>Advanced POS</strong>. {{ __('All rights reserved.') }} <br>
-            Designed with <i class="bi bi-heart-fill text-danger"></i> by AI
+            Designed with <i class="bi bi-heart-fill text-danger"></i> by Abdur Rahim
         </small>
     </footer>
 

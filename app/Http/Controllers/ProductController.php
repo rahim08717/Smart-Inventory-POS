@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class ProductController extends Controller
 {
@@ -22,22 +25,28 @@ class ProductController extends Controller
 
     public function store(Request $request)
     {
+        // ভ্যালিডেশন
         $request->validate([
             'name' => 'required|string|max:255',
+            'brand' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'variants' => 'required|array|min:1',
             'variants.*.name' => 'required',
-            'variants.*.sku' => 'required|distinct',
+            'variants.*.sku' => 'required|distinct|unique:product_variants,sku',
             'variants.*.price' => 'required|numeric|min:0',
         ]);
 
         try {
             DB::beginTransaction();
 
+            // ইমেজ হ্যান্ডলিং
+            $imagePath = null;
+            if ($request->hasFile('image')) {
+                $imagePath = $request->file('image')->store('products', 'public');
+            }
 
-            $imagePath = $this->handleImageUpload($request);
-
-
+            // প্রোডাক্ট তৈরি
             $product = Product::create([
                 'name' => $request->name,
                 'brand' => $request->brand,
@@ -45,7 +54,7 @@ class ProductController extends Controller
                 'image_path' => $imagePath,
             ]);
 
-
+            // ভেরিয়েন্ট তৈরি
             foreach ($request->variants as $variantData) {
                 $product->variants()->create([
                     'variant_name' => $variantData['name'],
@@ -56,14 +65,17 @@ class ProductController extends Controller
             }
 
             DB::commit();
+            //request check
+           
+
             return response()->json(['success' => true, 'message' => 'Product added successfully!']);
         } catch (\Exception $e) {
             DB::rollBack();
-
+            // এরর লগ চেক করার জন্য
+            Log::error('Product Store Error: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
         }
     }
-
 
 
     public function edit($id)
@@ -82,13 +94,19 @@ class ProductController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         try {
-
-            $imagePath = $this->handleImageUpload($request, $product->image_path);
-
+            // ইমেজ আপডেট লজিক
+            $imagePath = $product->image_path;
+            if ($request->hasFile('image')) {
+                // পুরনো ইমেজ ডিলিট
+                if ($imagePath && \Illuminate\Support\Facades\Storage::disk('public')->exists($imagePath)) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($imagePath);
+                }
+                $imagePath = $request->file('image')->store('products', 'public');
+            }
 
             $product->update([
                 'name' => $request->name,
@@ -96,7 +114,6 @@ class ProductController extends Controller
                 'description' => $request->description,
                 'image_path' => $imagePath,
             ]);
-
 
             return response()->json(['success' => true, 'message' => 'Product updated successfully!']);
         } catch (\Exception $e) {

@@ -127,11 +127,15 @@
                     <tr>
                         <td>{{ $index + 1 }}</td>
                         <td>
-                            @if ($item->product->image_path)
+                            {{-- প্রোডাক্ট আছে কিনা আগে চেক করা হচ্ছে --}}
+                            @if ($item->product && $item->product->image_path)
                                 <img src="{{ asset('storage/' . $item->product->image_path) }}"
                                     style="width: 30px; height: 30px; object-fit: cover; margin-right: 5px; vertical-align: middle;">
                             @endif
+
+                            {{-- প্রোডাক্ট ডিলিট হলেও নাম দেখাবে (অর্ডার আইটেম টেবিল থেকে) --}}
                             {{ $item->product_name }}
+
                             @if ($item->variant_name)
                                 <small>({{ $item->variant_name }})</small>
                             @endif

@@ -9,7 +9,7 @@ class Stock extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['warehouse_id', 'product_variant_id', 'quantity'];
+    protected $fillable = ['warehouse_id', 'product_variant_id', 'quantity','created_at','updated_at'];
 
 
     public function variant()
